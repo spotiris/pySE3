@@ -205,6 +205,8 @@ class Rotation(np.ndarray):
 
     if n_args == 0:
       vec = np.array([[0.0],[0.0],[0.0]], dtype=np.float64)
+    elif n_args == 1 and type(args[0]) is np.ndarray: # numpy array
+      vec = args[0].ravel()
     elif n_args == 1 and type(args[0]) is Rotation: # rotation_object
       rotation = args[0]
       if rotation.rotation_type == 'rotation_matrix':
