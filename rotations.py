@@ -1,6 +1,8 @@
 ''' Provides convention - consistent operations and conversions between 
  quaternions, Euler angles and rotation matricies.
  IMPORTANT NOTE: This uses left handed convention, so negate all angles to get RH convention.
+ I think this matches with the following document: 
+ http://ocw.mit.edu/courses/mechanical-engineering/2-154-maneuvering-and-control-of-surface-and-underwater-vehicles-13-49-fall-2004/lecture-notes/lec1.pdf
  '''
 from __future__ import print_function
 # from sys import stderr
@@ -33,6 +35,27 @@ class EulerAngles(object):
     else:
       raise Exception("EulerAngles.from_quaternion: cannot convert from rotation order '%s'" % (rotation_order))
     return Rotation(e, rotation_type='euler_angles', rotation_order=rotation_order)
+
+  @staticmethod
+  def time_integral(angles, angular_velocity, dt, rotation_order='ZYX'):
+    if rotation_order is not 'ZYX':
+      raise Exception("EulerAngles.from_quaternion: cannot convert from rotation order '%s'" % (rotation_order))
+    sin_theta, cos_theta = sin(angles[1]), cos(angles[1])
+    sin_phi, cos_phi = sin(angles[2]), cos(angles[2])
+    return angles + np.fliplr(np.array([
+            [0, sin_phi, cos_phi],
+            [0, cos_phi * cos_theta, -sin_phi * cos_theta],
+            [cos_theta, sin_phi * sin_theta, cos_phi * sin_theta]
+        ])).dot(angular_velocity * dt) / cos_theta
+  @staticmethod
+  def rates_to_angular_velocity(angles, euler_rates, rotation_order='ZYX'):
+    sin_theta, cos_theta = sin(angles[1]), cos(angles[1])
+    sin_phi, cos_phi = sin(angles[2]), cos(angles[2])
+    return np.array([
+        [cos_phi * cos_theta, -sin_phi , 0],
+        [sin_phi * cos_theta, cos_phi, 0],
+        [-sin_theta, 0, 1]
+        ]).dot(euler_rates)
 
 class Quaternion(object):
   ''' Quaternion in [w, x , y, z] order '''
